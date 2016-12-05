@@ -223,8 +223,7 @@ public class MainActivity extends ListActivity {
     public void postData(){
 
         //URL to the Google Form
-        //String url = "https://docs.google.com/forms/d/e/1FAIpQLSc_N_SLmX6rAjMB7eBUQFGvt2hFvbQW358xge8-EsFJOT7l_g/formResponse";
-        String url = "https://www.google.com";
+        String url = "https://docs.google.com/forms/d/e/1FAIpQLSc_N_SLmX6rAjMB7eBUQFGvt2hFvbQW358xge8-EsFJOT7l_g/formResponse";
 
         //Compose the string
         String data = name + sandwichType + ingredientsString;

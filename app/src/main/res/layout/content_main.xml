@@ -96,7 +96,7 @@
         <ListView
             android:id="@+id/android:list"
             android:layout_width="match_parent"
-            android:layout_height="299dp"
+            android:layout_height="223dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true" >
         </ListView>
