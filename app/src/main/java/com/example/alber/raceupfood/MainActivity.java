@@ -1,20 +1,28 @@
-/*
+/*###########################################################################//
 
-DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE 
-                    Version 2, December 2004 
+MIT License
 
- Copyright (C) 2016 Alberto Morato  
+Copyright (c) 2016 Alberto Morato
 
- Everyone is permitted to copy and distribute verbatim or modified 
- copies of this license document, and changing it is allowed as long 
- as the name is changed. 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE 
-   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-  0. You just DO WHAT THE FUCK YOU WANT TO.
-  
-  */
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+//###########################################################################*/
 
 
 package com.example.alber.raceupfood;
@@ -23,10 +31,6 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.preference.DialogPreference;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.SparseBooleanArray;
 import android.view.MotionEvent;
@@ -38,22 +42,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import java.net.URLEncoder;
 
 
 public class MainActivity extends ListActivity {
 
-    Button bottoneInvia;
-    EditText nomeText;
+    Button sendButton;
+    EditText nameText;
+    String sandwichType, name,  sandwichTypeRaw;
+    SparseBooleanArray selectedIngredients;
+    String ingredientsString = "";
+    String ingredientsStringRaw = "";
 
-    PostFood food = new PostFood();
+    PostFood food;
 
-    String tipoPanino, nome,  tipoPaninoRaw;
-
-    String[] ingredienti ={
+    String[] ingridients ={
             "PORCHETTA",
             "SOPRESSA",
             "LATTUGA",
@@ -65,21 +68,27 @@ public class MainActivity extends ListActivity {
             "FORMAGGIO",
             "+ Salsa rosa"
     };
-    SparseBooleanArray selectedIngredients;
 
-    String stringaIngredienti = "";
-    String listaIngr = "";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        sendButton = (Button) findViewById(R.id.buttonInvia);
+        nameText = (EditText) findViewById(R.id.nome);
+
+        food = new PostFood(getApplicationContext());
 
         final ListView listview= getListView();
         listview.setChoiceMode(listview.CHOICE_MODE_MULTIPLE);
         listview.setTextFilterEnabled(true);
 
+        /**
+         * Disable scrollView in ListView
+         */
         listview.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -102,33 +111,41 @@ public class MainActivity extends ListActivity {
             }
         });
 
-        bottoneInvia = (Button) findViewById(R.id.buttonInvia);
-        nomeText = (EditText) findViewById(R.id.nome);
+        /**
+         * Populate ListView
+         */
+        setListAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_checked, ingridients));
 
-        bottoneInvia.setOnClickListener(new View.OnClickListener() {
+
+        /**
+         * On click Send Button
+         */
+        sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                stringaIngredienti ="";
-                listaIngr = "";
+                ingredientsString ="";
+                ingredientsStringRaw = "";
                 selectedIngredients = listview.getCheckedItemPositions();
-                for (int ii = 0; ii < ingredienti.length; ii++) {
+                for (int ii = 0; ii < ingridients.length; ii++) {
                     if(selectedIngredients.get(ii)){
-                        listaIngr += ingredienti[ii] + " ";
-                        stringaIngredienti += "entry.1566187531="+ingredienti[ii] + "&";
+                        ingredientsStringRaw += ingridients[ii] + " ";
+                        ingredientsString += "entry.1566187531="+ ingridients[ii] + "&";
                     }
 
                 }
 
-                nome= nomeText.getText().toString();
-                if(nome.length()>0){
-                    nome="entry.1169803445=" + nome +"&";
+                name = nameText.getText().toString(); //get name from EditText
+                if(name.length()>0){
+                    name ="entry.1169803445=" + name +"&"; //and append the entry string for POST
                 }
 
-                if(stringaIngredienti.length()==0 || stringaIngredienti.length()==0 || tipoPanino.length()==0) {
-                    Toast.makeText(getApplicationContext(), "Non hai inserito tutte le info richieste", Toast.LENGTH_LONG).show();
+                if(ingredientsString.length()==0 || ingredientsString.length()==0 || sandwichType.length()==0) {
+                    Toast.makeText(getApplicationContext(), "Non hai inserito tutte le info richieste", Toast.LENGTH_LONG).show(); //Some fields are empty
 
                 }
                 else{
+                    //All ok let send the order: ask for confirm with alertDialog
                     final AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
                     alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
@@ -138,23 +155,44 @@ public class MainActivity extends ListActivity {
                     });
                     alertDialog.setNegativeButton("NO", null);
                     alertDialog.setTitle("Invia ordine");
-                    alertDialog.setMessage("Ciao " + nomeText.getText().toString() + "\n stai per ordinare " + tipoPaninoRaw + " con: \n" + listaIngr);
+                    alertDialog.setMessage("Ciao " + nameText.getText().toString() + "\nstai per ordinare " + sandwichTypeRaw + " con: \n" + ingredientsStringRaw);
                     alertDialog.create().show();
                 }
 
 
             }
         });
+    }
 
+    /**
+     * Get the checked RadioButton
+     * @param view
+     */
+    public void onRadioButtonClicked(View view) {
+        // Is the button now checked?
+        boolean checked = ((RadioButton) view).isChecked();
 
-        setListAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_checked, ingredienti));
-
-
-        //postData();
-        //<input type="hidden" name="entry.1796092198" jsname="L9xHkb" value="Opzione 1">
-
-
+        // Check which radio button was clicked
+        switch(view.getId()) {
+            case R.id.paninoGrande:
+                if (checked) {
+                    sandwichType = "entry.112685935=Panino Grande&";
+                    sandwichTypeRaw = "Panino Grande";
+                    break;
+                }
+            case R.id.paninoPiccolo:
+                if (checked){
+                    sandwichType = "entry.112685935=Panino Piccolo&";
+                    sandwichTypeRaw = "Panino Piccolo";
+                    break;
+                }
+            case R.id.paninoToast:
+                if (checked) {
+                    sandwichType = "entry.112685935=Toast&";
+                    sandwichTypeRaw = "Toast";
+                    break;
+                }
+        }
     }
 
     @Override
@@ -179,47 +217,29 @@ public class MainActivity extends ListActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Prepare the string and POST the data to Google Form
+     */
     public void postData(){
-        String url = "https://docs.google.com/forms/d/e/1FAIpQLSc_N_SLmX6rAjMB7eBUQFGvt2hFvbQW358xge8-EsFJOT7l_g/formResponse";
 
-        //<input type="hidden" name="entry.1632641272" jsname="L9xHkb" disabled="" value="Opzione 1">
+        //URL to the Google Form
+        //String url = "https://docs.google.com/forms/d/e/1FAIpQLSc_N_SLmX6rAjMB7eBUQFGvt2hFvbQW358xge8-EsFJOT7l_g/formResponse";
+        String url = "https://www.google.com";
 
-        //<input type="hidden" name="entry.1796092198" jsname="L9xHkb" value = "Opzione 1">
+        //Compose the string
+        String data = name + sandwichType + ingredientsString;
 
-        String data = nome+tipoPanino+stringaIngredienti;
+        //Delete the last character &
         data=data.substring(0,data.length()-1);
         System.out.println(data);
+
+        //POST data
         food.execute(url, data);
 
 
     }
 
-    public void onRadioButtonClicked(View view) {
-        // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
 
-        // Check which radio button was clicked
-        switch(view.getId()) {
-            case R.id.paninoGrande:
-                if (checked) {
-                    tipoPanino = "entry.112685935=Panino Grande&";
-                    tipoPaninoRaw = "Panino Grande";
-                    break;
-                }
-            case R.id.paninoPiccolo:
-                if (checked){
-                    tipoPanino = "entry.112685935=Panino Piccolo&";
-                    tipoPaninoRaw = "Panino Piccolo";
-                    break;
-                }
-            case R.id.paninoToast:
-                if (checked) {
-                    tipoPanino = "entry.112685935=Toast&";
-                    tipoPaninoRaw = "Toast";
-                    break;
-                }
-        }
-    }
 
 
 }
